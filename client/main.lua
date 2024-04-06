@@ -4,13 +4,9 @@ jailTime = 0
 currentJob = nil
 CellsBlip = nil
 TimeBlip = nil
-ShopBlip = nil
-local insidecanteen = false
 local insidefreedom = false
-local canteen_ped = 0
 local freedom_ped = 0
 local freedom
-local canteen
 
 -- Functions
 
@@ -83,7 +79,7 @@ RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
 		end
 	end)
 
-	if DoesEntityExist(canteen_ped) or DoesEntityExist(freedom_ped) then return end
+	if DoesEntityExist(freedom_ped) then return end
 
 	local pedModel = `s_m_m_armoured_01`
 
@@ -132,7 +128,7 @@ AddEventHandler('onResourceStart', function(resource)
 		TriggerEvent('prison:client:JailAlarm', true)
 	end)
 
-	if DoesEntityExist(canteen_ped) or DoesEntityExist(freedom_ped) then return end
+	if DoesEntityExist(freedom_ped) then return end
 
 	local pedModel = `s_m_m_armoured_01`
 
@@ -213,12 +209,14 @@ RegisterNetEvent('prison:client:Enter', function(time)
 	Wait(2000)
 	DoScreenFadeIn(1000)
 	QBCore.Functions.Notify(Lang:t('error.do_some_work', { currentjob = Config.Jobs[currentJob] }), 'error')
+	SetRelationshipBetweenGroups(3, `PRISONER`, `PLAYER`)
 end)
 
 RegisterNetEvent('prison:client:Leave', function()
 	if jailTime > 0 then
 		QBCore.Functions.Notify(Lang:t('info.timeleft', { JAILTIME = jailTime }))
 	else
+		SetRelationshipBetweenGroups(1, `PRISONER`, `PLAYER`)
 		jailTime = 0
 		TriggerServerEvent('prison:server:SetJailStatus', 0)
 		TriggerServerEvent('prison:server:GiveJailItems')
@@ -250,6 +248,7 @@ end)
 
 RegisterNetEvent('prison:client:UnjailPerson', function()
 	if jailTime > 0 then
+		SetRelationshipBetweenGroups(1, `PRISONER`, `PLAYER`)
 		TriggerServerEvent('prison:server:SetJailStatus', 0)
 		TriggerServerEvent('prison:server:GiveJailItems')
 		TriggerEvent('chat:addMessage', {

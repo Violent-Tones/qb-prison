@@ -19,14 +19,8 @@ end)
 
 RegisterNetEvent('prison:server:SaveJailItems', function()
     local src = source
-    local Player = QBCore.Functions.GetPlayer(src)
-    if not Player then return end
-    if not Player.PlayerData.metadata['jailitems'] or table.type(Player.PlayerData.metadata['jailitems']) == 'empty' then
-        Player.Functions.SetMetaData('jailitems', Player.PlayerData.items)
-        Player.Functions.AddMoney('cash', 80, 'jail money')
-        Wait(2000)
-        Player.Functions.ClearInventory()
-    end
+    exports.ox_inventory:ConfiscateInventory(src)
+    exports.ox_inventory:AddItem(src, 'cash', 100)
 end)
 
 RegisterNetEvent('prison:server:GiveJailItems', function(escaped)
