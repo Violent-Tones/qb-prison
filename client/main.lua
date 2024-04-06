@@ -4,13 +4,9 @@ jailTime = 0
 currentJob = nil
 CellsBlip = nil
 TimeBlip = nil
-ShopBlip = nil
-local insidecanteen = false
 local insidefreedom = false
-local canteen_ped = 0
 local freedom_ped = 0
 local freedom
-local canteen
 
 -- Functions
 
@@ -44,20 +40,6 @@ local function CreateCellsBlip()
 	BeginTextCommandSetBlipName("STRING")
 	AddTextComponentSubstringPlayerName(Lang:t("info.freedom_blip"))
 	EndTextCommandSetBlipName(TimeBlip)
-
-	if ShopBlip then
-		RemoveBlip(ShopBlip)
-	end
-	ShopBlip = AddBlipForCoord(Config.Locations["shop"].coords.x, Config.Locations["shop"].coords.y, Config.Locations["shop"].coords.z)
-
-	SetBlipSprite(ShopBlip, 52)
-	SetBlipDisplay(ShopBlip, 4)
-	SetBlipScale(ShopBlip, 0.5)
-	SetBlipAsShortRange(ShopBlip, true)
-	SetBlipColour(ShopBlip, 0)
-	BeginTextCommandSetBlipName("STRING")
-	AddTextComponentSubstringPlayerName(Lang:t("info.canteen_blip"))
-	EndTextCommandSetBlipName(ShopBlip)
 end
 
 -- Add clothes to prisioner
@@ -97,7 +79,7 @@ RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
 		end
 	end)
 
-	if DoesEntityExist(canteen_ped) or DoesEntityExist(freedom_ped) then return end
+	if DoesEntityExist(freedom_ped) then return end
 
 	local pedModel = `s_m_m_armoured_01`
 
@@ -112,12 +94,6 @@ RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
 	SetBlockingOfNonTemporaryEvents(freedom_ped, true)
 	TaskStartScenarioInPlace(freedom_ped, 'WORLD_HUMAN_CLIPBOARD', 0, true)
 
-	canteen_ped = CreatePed(0, pedModel, Config.Locations["shop"].coords.x, Config.Locations["shop"].coords.y, Config.Locations["shop"].coords.z, Config.Locations["shop"].coords.w, false, true)
-	FreezeEntityPosition(canteen_ped, true)
-	SetEntityInvincible(canteen_ped, true)
-	SetBlockingOfNonTemporaryEvents(canteen_ped, true)
-	TaskStartScenarioInPlace(canteen_ped, 'WORLD_HUMAN_CLIPBOARD', 0, true)
-
 	if not Config.UseTarget then return end
 
 	exports['qb-target']:AddTargetEntity(freedom_ped, {
@@ -127,21 +103,6 @@ RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
 				event = "prison:client:Leave",
 				icon = 'fas fa-clipboard',
 				label = Lang:t("info.target_freedom_option"),
-				canInteract = function()
-					return inJail
-				end
-			}
-		},
-		distance = 2.5,
-	})
-
-	exports['qb-target']:AddTargetEntity(canteen_ped, {
-		options = {
-			{
-				type = "client",
-				event = "prison:client:canteen",
-				icon = 'fas fa-clipboard',
-				label = Lang:t("info.target_canteen_option"),
 				canInteract = function()
 					return inJail
 				end
@@ -167,7 +128,7 @@ AddEventHandler('onResourceStart', function(resource)
 		TriggerEvent('prison:client:JailAlarm', true)
 	end)
 
-	if DoesEntityExist(canteen_ped) or DoesEntityExist(freedom_ped) then return end
+	if DoesEntityExist(freedom_ped) then return end
 
 	local pedModel = `s_m_m_armoured_01`
 
@@ -182,12 +143,6 @@ AddEventHandler('onResourceStart', function(resource)
 	SetBlockingOfNonTemporaryEvents(freedom_ped, true)
 	TaskStartScenarioInPlace(freedom_ped, 'WORLD_HUMAN_CLIPBOARD', 0, true)
 
-	canteen_ped = CreatePed(0, pedModel, Config.Locations["shop"].coords.x, Config.Locations["shop"].coords.y, Config.Locations["shop"].coords.z, Config.Locations["shop"].coords.w, false, true)
-	FreezeEntityPosition(canteen_ped, true)
-	SetEntityInvincible(canteen_ped, true)
-	SetBlockingOfNonTemporaryEvents(canteen_ped, true)
-	TaskStartScenarioInPlace(canteen_ped, 'WORLD_HUMAN_CLIPBOARD', 0, true)
-
 	if not Config.UseTarget then return end
 
 	exports['qb-target']:AddTargetEntity(freedom_ped, {
@@ -197,21 +152,6 @@ AddEventHandler('onResourceStart', function(resource)
 				event = "prison:client:Leave",
 				icon = 'fas fa-clipboard',
 				label = Lang:t("info.target_freedom_option"),
-				canInteract = function()
-					return inJail
-				end
-			}
-		},
-		distance = 2.5,
-	})
-
-	exports['qb-target']:AddTargetEntity(canteen_ped, {
-		options = {
-			{
-				type = "client",
-				event = "prison:client:canteen",
-				icon = 'fas fa-clipboard',
-				label = Lang:t("info.target_canteen_option"),
 				canInteract = function()
 					return inJail
 				end
@@ -269,12 +209,14 @@ RegisterNetEvent('prison:client:Enter', function(time)
 	Wait(2000)
 	DoScreenFadeIn(1000)
 	QBCore.Functions.Notify(Lang:t("error.do_some_work", { currentjob = Config.Jobs[currentJob] }), "error")
+	SetRelationshipBetweenGroups(3, `PRISONER`, `PLAYER`)
 end)
 
 RegisterNetEvent('prison:client:Leave', function()
 	if jailTime > 0 then
 		QBCore.Functions.Notify(Lang:t("info.timeleft", { JAILTIME = jailTime }))
 	else
+		SetRelationshipBetweenGroups(1, `PRISONER`, `PLAYER`)
 		jailTime = 0
 		TriggerServerEvent("prison:server:SetJailStatus", 0)
 		TriggerServerEvent("prison:server:GiveJailItems")
@@ -289,8 +231,6 @@ RegisterNetEvent('prison:client:Leave', function()
 		CellsBlip = nil
 		RemoveBlip(TimeBlip)
 		TimeBlip = nil
-		RemoveBlip(ShopBlip)
-		ShopBlip = nil
 		QBCore.Functions.Notify(Lang:t("success.free_"))
 		DoScreenFadeOut(500)
 		while not IsScreenFadedOut() do
@@ -308,6 +248,7 @@ end)
 
 RegisterNetEvent('prison:client:UnjailPerson', function()
 	if jailTime > 0 then
+		SetRelationshipBetweenGroups(1, `PRISONER`, `PLAYER`)
 		TriggerServerEvent("prison:server:SetJailStatus", 0)
 		TriggerServerEvent("prison:server:GiveJailItems")
 		TriggerEvent("chat:addMessage", {
@@ -321,8 +262,6 @@ RegisterNetEvent('prison:client:UnjailPerson', function()
 		CellsBlip = nil
 		RemoveBlip(TimeBlip)
 		TimeBlip = nil
-		RemoveBlip(ShopBlip)
-		ShopBlip = nil
 		QBCore.Functions.Notify(Lang:t("success.free_"))
 		DoScreenFadeOut(500)
 		while not IsScreenFadedOut() do
@@ -334,14 +273,6 @@ RegisterNetEvent('prison:client:UnjailPerson', function()
 		Wait(500)
 		DoScreenFadeIn(1000)
 	end
-end)
-
-RegisterNetEvent('prison:client:canteen', function()
-	local ShopItems = {}
-	ShopItems.label = "Prison Canteen"
-	ShopItems.items = Config.CanteenItems
-	ShopItems.slots = #Config.CanteenItems
-	TriggerServerEvent("inventory:server:OpenInventory", "shop", "Canteenshop_" .. math.random(1, 99), ShopItems)
 end)
 
 -- Threads
@@ -387,29 +318,6 @@ CreateThread(function()
 					end
 				end)
 				exports['qb-core']:DrawText('[E] Check Time', 'left')
-			else
-				exports['qb-core']:HideText()
-			end
-		end)
-		canteen = BoxZone:Create(vector3(Config.Locations["shop"].coords.x, Config.Locations["shop"].coords.y, Config.Locations["shop"].coords.z), 2.75, 7.75, {
-			name = "canteen",
-			debugPoly = false,
-		})
-		canteen:onPlayerInOut(function(isPointInside)
-			insidecanteen = isPointInside
-			if isPointInside then
-				CreateThread(function()
-					while insidecanteen do
-						if IsControlJustReleased(0, 38) then
-							exports['qb-core']:KeyPressed()
-							exports['qb-core']:HideText()
-							TriggerEvent("prison:client:canteen")
-							break
-						end
-						Wait(0)
-					end
-				end)
-				exports['qb-core']:DrawText('[E] Open Canteen', 'left')
 			else
 				exports['qb-core']:HideText()
 			end

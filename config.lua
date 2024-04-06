@@ -65,9 +65,6 @@ Config.Locations = {
     ["middle"] = {
         coords = vector4(1693.33, 2569.51, 44.55, 123.5)
     },
-    ["shop"] = {
-        coords = vector4(1777.59, 2560.52, 44.62, 187.83)
-    },
     spawns = {
         [1] = {
             coords = vector4(1661.046, 2524.681, 45.564, 260.545)
@@ -102,24 +99,5 @@ Config.Locations = {
         [11] = {
             coords = vector4(1696.09, 2469.4, 45.56, 1.4)
         }
-    }
-}
-
-Config.CanteenItems = {
-    [1] = {
-        name = "sandwich",
-        price = 4,
-        amount = 50,
-        info = {},
-        type = "item",
-        slot = 1
-    },
-    [2] = {
-        name = "water_bottle",
-        price = 4,
-        amount = 50,
-        info = {},
-        type = "item",
-        slot = 2
     }
 }
